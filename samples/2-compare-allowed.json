@@ -1,0 +1,33 @@
+{
+  "title": "Scene 2 - Compare inside the allowed list",
+  "description": "Same synthetic Japan-only policy. The change moves the VM from Tokyo to Osaka. Both regions are allowed, so the reviewer compares official grid intensity: 449 vs 299 gCO2eq/kWh (about 33% lower on this grid metric - not a guaranteed workload emission cut).",
+  "policy_text": "Production data must remain inside Japan (Tokyo or Osaka regions only).",
+  "policy": {
+    "name": "Sample Japan data residency",
+    "description": "Synthetic demo policy: production data must stay in Japanese regions.",
+    "allowed_regions": ["asia-northeast1", "asia-northeast2"],
+    "data_residency": {"jurisdiction": "JP", "label": "Japan"}
+  },
+  "plan": {
+    "format_version": "1.2",
+    "terraform_version": "1.9.0",
+    "resource_changes": [
+      {
+        "address": "google_compute_instance.app_server",
+        "type": "google_compute_instance",
+        "name": "app_server",
+        "change": {
+          "actions": ["update"],
+          "before": {
+            "zone": "asia-northeast1-a",
+            "machine_type": "e2-standard-4"
+          },
+          "after": {
+            "zone": "asia-northeast2-a",
+            "machine_type": "e2-standard-4"
+          }
+        }
+      }
+    ]
+  }
+}

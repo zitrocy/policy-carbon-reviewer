@@ -1,0 +1,37 @@
+{
+  "title": "Scene 4 - Policy written in prose",
+  "description": "The same kind of policy, written the way it actually arrives: a sentence from a compliance owner, not JSON. Switch the policy input to 'Plain English' and run it - the interpreter agent expands it to region IDs, and every region it returns is checked against the official catalog before the gate runs. Needs GEMINI_API_KEY; the structured JSON below is the same policy for running without a key.",
+  "policy_text": "All production workloads holding customer data must stay inside Japan. Nothing may run outside Japanese regions, however much cleaner the grid is elsewhere.",
+  "policy": {
+    "name": "Japan residency (structured equivalent)",
+    "description": "Synthetic demo policy. Shown here as JSON so the scene also runs without a model.",
+    "allowed_regions": ["asia-northeast1", "asia-northeast2"],
+    "data_residency": {"jurisdiction": "JP", "label": "Japan"}
+  },
+  "plan": {
+    "format_version": "1.2",
+    "terraform_version": "1.9.0",
+    "resource_changes": [
+      {
+        "address": "google_compute_instance.payments_api",
+        "type": "google_compute_instance",
+        "name": "payments_api",
+        "change": {
+          "actions": ["update"],
+          "before": {"zone": "asia-northeast1-a", "machine_type": "n2-standard-16"},
+          "after": {"zone": "asia-northeast2-a", "machine_type": "n2-standard-16"}
+        }
+      },
+      {
+        "address": "google_compute_instance.batch_worker",
+        "type": "google_compute_instance",
+        "name": "batch_worker",
+        "change": {
+          "actions": ["create"],
+          "before": null,
+          "after": {"zone": "asia-northeast2-b", "machine_type": "c3-standard-8"}
+        }
+      }
+    ]
+  }
+}

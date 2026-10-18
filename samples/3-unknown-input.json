@@ -1,0 +1,53 @@
+{
+  "title": "Scene 3 - Unknown input: flagged, not guessed",
+  "description": "A corrupted or unfamiliar plan: one VM targets an unrecognized region, one resource type is not supported, and one VM is being deleted. The reviewer reports each case instead of guessing a recommendation.",
+  "policy_text": "Production data must remain inside Japan (Tokyo or Osaka regions only).",
+  "policy": {
+    "name": "Sample Japan data residency",
+    "description": "Synthetic demo policy: production data must stay in Japanese regions.",
+    "allowed_regions": ["asia-northeast1", "asia-northeast2"],
+    "data_residency": {"jurisdiction": "JP", "label": "Japan"}
+  },
+  "plan": {
+    "format_version": "1.2",
+    "terraform_version": "1.9.0",
+    "resource_changes": [
+      {
+        "address": "google_compute_instance.mystery_box",
+        "type": "google_compute_instance",
+        "name": "mystery_box",
+        "change": {
+          "actions": ["create"],
+          "before": null,
+          "after": {
+            "zone": "atlantis-central1-a",
+            "machine_type": "e2-medium"
+          }
+        }
+      },
+      {
+        "address": "google_sql_database_instance.orders",
+        "type": "google_sql_database_instance",
+        "name": "orders",
+        "change": {
+          "actions": ["create"],
+          "before": null,
+          "after": {"region": "asia-northeast1"}
+        }
+      },
+      {
+        "address": "google_compute_instance.legacy_node",
+        "type": "google_compute_instance",
+        "name": "legacy_node",
+        "change": {
+          "actions": ["delete"],
+          "before": {
+            "zone": "asia-northeast1-b",
+            "machine_type": "n1-standard-1"
+          },
+          "after": null
+        }
+      }
+    ]
+  }
+}

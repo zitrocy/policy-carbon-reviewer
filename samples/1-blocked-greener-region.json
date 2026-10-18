@@ -1,0 +1,33 @@
+{
+  "title": "Scene 1 - Greener but policy-violating: blocked",
+  "description": "A sample Japan-only data residency policy. The change moves a VM from Tokyo to Paris. Paris is far cleaner on the grid (16 vs 449 gCO2eq/kWh), but the policy gate blocks it. This is a synthetic demo policy, not a claim about real financial regulation.",
+  "policy_text": "Production data must remain inside Japan (Tokyo or Osaka regions only).",
+  "policy": {
+    "name": "Sample Japan data residency",
+    "description": "Synthetic demo policy: production data must stay in Japanese regions.",
+    "allowed_regions": ["asia-northeast1", "asia-northeast2"],
+    "data_residency": {"jurisdiction": "JP", "label": "Japan"}
+  },
+  "plan": {
+    "format_version": "1.2",
+    "terraform_version": "1.9.0",
+    "resource_changes": [
+      {
+        "address": "google_compute_instance.app_server",
+        "type": "google_compute_instance",
+        "name": "app_server",
+        "change": {
+          "actions": ["update"],
+          "before": {
+            "zone": "asia-northeast1-a",
+            "machine_type": "e2-standard-4"
+          },
+          "after": {
+            "zone": "europe-west9-a",
+            "machine_type": "e2-standard-4"
+          }
+        }
+      }
+    ]
+  }
+}

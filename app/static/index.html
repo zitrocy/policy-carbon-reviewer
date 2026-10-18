@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Policy-Compliant Carbon Reviewer</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%234c8dff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%233fb950'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">&#9673;</span>
+    <div>
+      <h1>Policy-Compliant Carbon Reviewer</h1>
+      <p class="tagline">Code decides. Gemini explains. A greener region is still the wrong region if it breaks your policy.</p>
+    </div>
+  </div>
+  <div class="topright">
+    <div class="role-picker">
+      <label class="role-label" for="role-select">View as</label>
+      <select id="role-select">
+        <option value="operator">Infrastructure operator</option>
+        <option value="administrator">Policy administrator</option>
+        <option value="auditor">Auditor &middot; read-only</option>
+      </select>
+    </div>
+    <div class="topmeta" id="engine-meta">loading&hellip;</div>
+  </div>
+</header>
+
+<p class="role-banner" id="role-banner"></p>
+
+<main class="layout">
+  <section class="panel input-panel">
+    <h2>Input</h2>
+    <div class="sample-bar" id="sample-bar"></div>
+    <p class="sample-desc" id="sample-desc"></p>
+
+    <div class="field-head">
+      <span class="field-label">Policy</span>
+      <div class="mode-toggle" role="group" aria-label="Policy input mode">
+        <button type="button" id="mode-json" class="mode-btn active" aria-pressed="true">Structured JSON</button>
+        <button type="button" id="mode-text" class="mode-btn" aria-pressed="false">Plain English</button>
+      </div>
+    </div>
+    <textarea id="policy-editor" class="code-editor small" spellcheck="false"></textarea>
+    <div id="policy-text-wrap" hidden>
+      <textarea id="policy-text" class="code-editor small prose" spellcheck="false"
+        placeholder="e.g. Production data has to stay inside Japan. Dev workloads can run anywhere in the APAC region."></textarea>
+      <p class="hint dim">The interpreter agent turns this into a structured policy and
+        every region it returns is checked against the official region catalog before
+        the gate runs. Needs GEMINI_API_KEY.</p>
+    </div>
+
+    <label class="field-label" for="plan-editor">Terraform plan (JSON, from <code>terraform show -json</code>)</label>
+    <textarea id="plan-editor" class="code-editor" spellcheck="false"></textarea>
+
+    <button id="run-btn" class="run-btn">Run review</button>
+    <p class="hint" id="input-error" hidden></p>
+  </section>
+
+  <section class="panel output-panel">
+    <h2>Review</h2>
+    <div id="empty-state" class="empty-state">
+      <p>Pick a sample scenario on the left and run the review.</p>
+      <p class="dim">The pipeline: parse plan &rarr; policy gate &rarr; compare allowed regions on official grid carbon data &rarr; Gemini writes the PR comment from code-verified facts.</p>
+    </div>
+    <div id="loading-state" class="empty-state" hidden>
+      <div class="spinner"></div>
+      <p>Running the review&hellip;</p>
+    </div>
+    <div id="results" hidden>
+
+      <div id="verdict-banner" class="verdict"></div>
+
+      <div class="card impact-card" id="impact-card" hidden>
+        <div class="impact-head">
+          <div>
+            <span class="impact-label" id="impact-label"></span>
+            <span class="impact-figure" id="impact-figure"></span>
+          </div>
+          <button type="button" class="link-btn" id="impact-toggle" aria-expanded="false">
+            How this was estimated
+          </button>
+        </div>
+        <p class="impact-sub" id="impact-sub"></p>
+        <div id="impact-detail" hidden>
+          <ul class="assumptions" id="impact-assumptions"></ul>
+          <table class="impact-table"><tbody id="impact-rows"></tbody></table>
+        </div>
+      </div>
+
+      <div class="card" id="gate-card">
+        <h3>Policy gate</h3>
+        <p class="card-sub" id="gate-policy-name"></p>
+        <div id="gate-interpreted" class="interpreted-box" hidden></div>
+        <div id="gate-list"></div>
+        <p class="note" id="gate-unknown" hidden></p>
+      </div>
+
+      <div class="card" id="compare-card" hidden>
+        <h3>Carbon comparison <span class="scope-chip">allowed regions only</span></h3>
+        <table class="compare-table">
+          <thead>
+            <tr><th>Region</th><th>CFE %</th><th>Grid gCO&#8322;eq/kWh</th><th>vs baseline</th><th></th></tr>
+          </thead>
+          <tbody id="compare-body"></tbody>
+        </table>
+        <p class="note" id="compare-source"></p>
+      </div>
+
+      <div class="card" id="review-card" hidden>
+        <div class="card-head-row">
+          <h3>PR comment <span id="review-badge" class="badge"></span></h3>
+          <button type="button" class="link-btn" id="copy-comment-btn">Copy markdown</button>
+        </div>
+        <p class="note" id="review-note" hidden></p>
+        <pre class="comment" id="review-comment"></pre>
+      </div>
+
+      <div class="card trace-card" id="trace-card" hidden>
+        <h3>Agent pipeline <span class="scope-chip" id="trace-chip"></span></h3>
+        <p class="card-sub">Every decision below marked <em>code</em> is deterministic.
+          A model is used only to read prose and to write prose.</p>
+        <ol class="trace" id="trace-list"></ol>
+      </div>
+
+      <div class="card" id="method-card" hidden>
+        <h3>Methodology &amp; limitations</h3>
+        <p class="card-sub">What the numbers on this page are, and what they are not.</p>
+        <div id="method-body"></div>
+      </div>
+
+      <div class="card" id="history-card" hidden>
+        <h3>Change reviews <span class="scope-chip" id="history-chip"></span></h3>
+        <p class="card-sub">Every review run in this browser, newest first.
+          Append-only: entries are never edited, only added.</p>
+        <ol class="history" id="history-list"></ol>
+        <button type="button" class="link-btn" id="history-clear">Clear this browser's record</button>
+      </div>
+
+      <div class="card" id="resources-card" hidden>
+        <h3>Plan details</h3>
+        <div id="resources-list"></div>
+      </div>
+
+      <p class="elapsed" id="elapsed"></p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span id="footer-source"></span>
+  <span class="dim">Demo output is advisory. It never changes real infrastructure or PRs. CFE% and grid intensity are different metrics; grid intensity is the comparison metric.</span>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
